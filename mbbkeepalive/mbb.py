@@ -38,12 +38,13 @@ class NMCliConList(object):
 
 
 def has_internet_connectivity():
+    has_connectivity = False
     try:
         response = requests.get('http://google.com')
         if response.status_code == 200:
-            return True
+            has_connectivity = True
     finally:
-        return False
+        return has_connectivity
 
 
 def enable_gsm_interface():
