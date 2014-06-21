@@ -43,3 +43,6 @@ def enable_gsm_interface():
     subprocess.call(['nmcli', 'nm', 'wwan', 'off'])
     if nmcli.has_gsm_interface():
         subprocess.call(['nmcli', 'nm', 'wwan', 'on'])
+
+if __name__ == '__main__':
+    enable_gsm_interface()
