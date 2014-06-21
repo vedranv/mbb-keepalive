@@ -40,7 +40,7 @@ class NMCliConList(object):
 def has_internet_connectivity():
     has_connectivity = False
     try:
-        response = requests.get('http://google.com')
+        response = requests.get('http://74.125.228.100')
         if response.status_code == 200:
             has_connectivity = True
     finally:
