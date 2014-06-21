@@ -1,4 +1,5 @@
 import subprocess
+import requests
 
 
 class NMCliConList(object):
@@ -36,6 +37,15 @@ class NMCliConList(object):
         return len(self.gsm_interfaces) > 0
 
 
+def has_internet_connectivity():
+    try:
+        response = requests.get('http://google.com')
+        if response.status_code == 200:
+            return True
+    finally:
+        return False
+
+
 def enable_gsm_interface():
     output = subprocess.check_output(['nmcli', 'con', 'list'])
     nmcli = NMCliConList(output)
@@ -45,4 +55,5 @@ def enable_gsm_interface():
         subprocess.call(['nmcli', 'nm', 'wwan', 'on'])
 
 if __name__ == '__main__':
-    enable_gsm_interface()
+    if not has_internet_connectivity():
+        enable_gsm_interface()
