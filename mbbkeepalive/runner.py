@@ -1,10 +1,10 @@
-from mbbkeepalive.mbb import has_internet_connectivity, enable_gsm_interface
+from mbbkeepalive.mbb import MBBKeepAliveExecutor
 import time
 
 __author__ = 'vedran'
 
 if __name__ == '__main__':
+    executor = MBBKeepAliveExecutor()
     while True:
-        if not has_internet_connectivity():
-            enable_gsm_interface()
+        executor.execute()
         time.sleep(20)

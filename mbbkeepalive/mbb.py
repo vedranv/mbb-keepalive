@@ -3,6 +3,7 @@ import requests
 import smtplib
 from email.mime.text import MIMEText
 import os
+from BeautifulSoup import BeautifulSoup
 
 
 class Tele2TpoParser(object):
@@ -12,7 +13,32 @@ class Tele2TpoParser(object):
         self.tpo = self._parse()
 
     def _parse(self):
-        pass
+        bs = BeautifulSoup(self.output)
+        divs = bs.findAll('div')
+        tpo = {}
+        for div in divs:
+            parsing_data_info = False
+            parsing_money_info = False
+            ps = div.findAll('p')
+            for p in ps:
+                if 'informacije o stanju' in unicode(p).lower():
+                    parsing_money_info = True
+                if '- stanje mb (opcije)' in unicode(p).lower():
+                    parsing_data_info = True
+
+            target_p = div.findAll('p', {'class': 'text-info text-center'})
+            if parsing_money_info:
+                tpo['prepaid_remaining'] = float(target_p[0].string.strip(' KN'))
+            if parsing_data_info:
+                for idx, p in enumerate(target_p):
+                    if idx == 0:
+                        tpo['option_remaining'] = int(p.string.strip(' MB'))
+                    elif idx == 1:
+                        tpo['promo_remaining'] = int(p.string.strip(' MB'))
+                    else:
+                        raise Exception('Invalid entry. Expecting only two values')
+
+        return tpo
 
 class NMCliConList(object):
     def __init__(self, output):
@@ -68,6 +94,12 @@ def enable_gsm_interface():
         subprocess.call(['nmcli', 'nm', 'wwan', 'on'])
 
 
+def get_tpo():
+    response = requests.get('http://mbb.tele2.hr/fetch/tpo')
+    parser = Tele2TpoParser(response.content)
+    return parser.tpo
+
+
 def send_mail(subject, message):
     _to = os.getenv('MAIL_TO')
     _from = os.getenv('MAIL_FROM')
@@ -84,6 +116,45 @@ def send_mail(subject, message):
 
     smtp.sendmail(_from, [_to], msg.as_string())
     smtp.quit()
+
+
+class MBBKeepAliveExecutor(object):
+    def __init__(self):
+        super(MBBKeepAliveExecutor, self).__init__()
+        self.service_up_notification_sent = False
+        self.low_bandwith_notification_sent = False
+
+    def execute(self):
+        if not has_internet_connectivity():
+            enable_gsm_interface()
+
+        if has_internet_connectivity():
+            self.tpo = get_tpo()
+            self.send_notification_if_needed()
+
+    def send_notification_if_needed(self):
+        message = ''
+        needs_mail_send = False
+        subject = None
+        if not self.service_up_notification_sent:
+            needs_mail_send = True
+            self.service_up_notification_sent = True
+            subject = 'Notifikacija - servis pokrenut'
+            message += 'MBB servis pokrenut i internet aktivan\n'
+        if self.tpo and self.tpo['option_remaining'] < 100:
+            needs_mail_send = True
+            self.low_bandwith_notification_sent = True
+            subject = 'Notifikacija - nisko stanje prepaid opcije'
+            message += 'Nisko stanje prepaid opcije. Preostalo samo %d MB\n' % self.tpo['option_remaining']
+        if self.tpo:
+            message += 'Stanje prepaid %f kn\n' % self.tpo['prepaid_remaining']
+            message += 'Stanje opcije %d MB\n' % self.tpo['option_remaining']
+            message += 'Stanje promotivnog paketa %d MB\n' % self.tpo['promo_remaining']
+
+        if not subject:
+            subject = 'Notifikacija MBB'
+        if needs_mail_send:
+            send_mail(subject, message)
 
 if __name__ == '__main__':
     if not has_internet_connectivity():
