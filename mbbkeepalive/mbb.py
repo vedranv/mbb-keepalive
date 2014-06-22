@@ -109,6 +109,10 @@ def send_mail(subject, message):
     _to = os.getenv('MAIL_TO')
     _from = os.getenv('MAIL_FROM')
 
+    to_emails = _to.split(',')
+    if len(to_emails) > 0:
+        main_to = to_emails[0]
+
     smtp = smtplib.SMTP(os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT'))
     if os.getenv('SMTP_USE_TLS') == 'true':
         smtp.starttls()
@@ -117,9 +121,9 @@ def send_mail(subject, message):
     msg = MIMEText(message)
     msg['Subject'] = subject
     msg['From'] = _from
-    msg['To'] = _to
+    msg['To'] = main_to
 
-    smtp.sendmail(_from, [_to], msg.as_string())
+    smtp.sendmail(_from, to_emails, msg.as_string())
     smtp.quit()
 
 
@@ -150,7 +154,7 @@ class MBBKeepAliveExecutor(object):
             message += 'MBB servis pokrenut i internet aktivan\n'
         if self.new_ip_address != self.ip_address:
             needs_mail_send = True
-            message += 'Nova ip adresa: %s' % self.new_ip_address
+            message += 'Nova ip adresa: %s\n' % self.new_ip_address
             self.ip_address = self.new_ip_address
         if self.tpo and self.tpo['option_remaining'] < 100:
             needs_mail_send = True
