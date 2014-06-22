@@ -5,6 +5,7 @@ from email.mime.text import MIMEText
 import os
 from BeautifulSoup import BeautifulSoup
 import netifaces
+import datetime
 
 
 class Tele2TpoParser(object):
@@ -144,7 +145,7 @@ class MBBKeepAliveExecutor(object):
             self.send_notification_if_needed()
 
     def send_notification_if_needed(self):
-        message = ''
+        message = '%s\n' % datetime.datetime.now().strftime('%d.%m.%Y %H:%M:%S')
         needs_mail_send = False
         subject = None
         if not self.service_up_notification_sent:
