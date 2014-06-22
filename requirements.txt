@@ -1,0 +1,6 @@
+BeautifulSoup==3.2.1
+netifaces==0.10.4
+py==1.4.20
+pytest==2.5.2
+requests==2.3.0
+wsgiref==0.1.2
