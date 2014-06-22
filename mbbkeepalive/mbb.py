@@ -4,6 +4,7 @@ import smtplib
 from email.mime.text import MIMEText
 import os
 from BeautifulSoup import BeautifulSoup
+import netifaces
 
 
 class Tele2TpoParser(object):
@@ -39,6 +40,7 @@ class Tele2TpoParser(object):
                         raise Exception('Invalid entry. Expecting only two values')
 
         return tpo
+
 
 class NMCliConList(object):
     def __init__(self, output):
@@ -100,6 +102,9 @@ def get_tpo():
     return parser.tpo
 
 
+def get_mbb_ip():
+    return str(netifaces.ifaddresses('ppp0'))
+
 def send_mail(subject, message):
     _to = os.getenv('MAIL_TO')
     _from = os.getenv('MAIL_FROM')
@@ -123,6 +128,7 @@ class MBBKeepAliveExecutor(object):
         super(MBBKeepAliveExecutor, self).__init__()
         self.service_up_notification_sent = False
         self.low_bandwith_notification_sent = False
+        self.ip_address = None
 
     def execute(self):
         if not has_internet_connectivity():
@@ -130,6 +136,7 @@ class MBBKeepAliveExecutor(object):
 
         if has_internet_connectivity():
             self.tpo = get_tpo()
+            self.new_ip_address = get_mbb_ip()
             self.send_notification_if_needed()
 
     def send_notification_if_needed(self):
@@ -141,6 +148,10 @@ class MBBKeepAliveExecutor(object):
             self.service_up_notification_sent = True
             subject = 'Notifikacija - servis pokrenut'
             message += 'MBB servis pokrenut i internet aktivan\n'
+        if self.new_ip_address != self.ip_address:
+            needs_mail_send = True
+            message += 'Nova ip adresa: %s' % self.new_ip_address
+            self.ip_address = self.new_ip_address
         if self.tpo and self.tpo['option_remaining'] < 100:
             needs_mail_send = True
             self.low_bandwith_notification_sent = True
