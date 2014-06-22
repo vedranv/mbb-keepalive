@@ -1,0 +1,21 @@
+<h2>
+    Stanje računa
+</h2>
+<div>
+    <p>Informacije o stanju računa i raspoloživom podatkovnom prometu 
+    informativnog su karaktera i mogu odstupati od stvarne potrošnje zbog 
+    mogućeg kašnjenja u obračunu.
+    </p>
+    <strong>Stanje vašeg računa je:</strong>
+    <p class="text-info text-center">18.69 KN</p>
+</div>
+<div>
+    <strong>Ukupna količina vašeg podatkovnog prometa</strong>
+    <p>
+        - stanje MB (opcije):
+        <p class="text-info text-center">1235 MB</p>
+        - stanje MB (promotivni paket ):
+        <p class="text-info text-center">0 MB</p>
+        
+    </p>
+</div>

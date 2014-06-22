@@ -1,6 +1,18 @@
 import subprocess
 import requests
+import smtplib
+from email.mime.text import MIMEText
+import os
 
+
+class Tele2TpoParser(object):
+    def __init__(self, output):
+        super(Tele2TpoParser, self).__init__()
+        self.output = output
+        self.tpo = self._parse()
+
+    def _parse(self):
+        pass
 
 class NMCliConList(object):
     def __init__(self, output):
@@ -54,6 +66,24 @@ def enable_gsm_interface():
     subprocess.call(['nmcli', 'nm', 'wwan', 'off'])
     if nmcli.has_gsm_interface():
         subprocess.call(['nmcli', 'nm', 'wwan', 'on'])
+
+
+def send_mail(subject, message):
+    _to = os.getenv('MAIL_TO')
+    _from = os.getenv('MAIL_FROM')
+
+    smtp = smtplib.SMTP(os.getenv('SMTP_SERVER'), os.getenv('SMTP_PORT'))
+    if os.getenv('SMTP_USE_TLS') == 'true':
+        smtp.starttls()
+    smtp.login(os.getenv('SMTP_USER'), os.getenv('SMTP_PASSWORD'))
+
+    msg = MIMEText(message)
+    msg['Subject'] = subject
+    msg['From'] = _from
+    msg['To'] = _to
+
+    smtp.sendmail(_from, [_to], msg.as_string())
+    smtp.quit()
 
 if __name__ == '__main__':
     if not has_internet_connectivity():
