@@ -99,12 +99,18 @@ def enable_gsm_interface():
 
 def get_tpo():
     response = requests.get('http://mbb.tele2.hr/fetch/tpo')
-    parser = Tele2TpoParser(response.content)
+    if response.status_code == 200:
+        tpo = response.content
+    else:
+        raise Exception('Invalid response code %s' % response.status_code)
+
+    parser = Tele2TpoParser(tpo)
     return parser.tpo
 
 
 def get_mbb_ip():
     return str(netifaces.ifaddresses('ppp0'))
+
 
 def send_mail(subject, message):
     _to = os.getenv('MAIL_TO')
@@ -136,13 +142,20 @@ class MBBKeepAliveExecutor(object):
         self.ip_address = None
 
     def execute(self):
-        if not has_internet_connectivity():
+        has_internet_connection = False
+        try:
+            self.tpo = get_tpo()
+            has_internet_connection = True
+        except Exception:
             enable_gsm_interface()
 
-        if has_internet_connectivity():
-            self.tpo = get_tpo()
+        try:
+            if not has_internet_connection:
+                self.tpo = get_tpo()
             self.new_ip_address = get_mbb_ip()
             self.send_notification_if_needed()
+        except Exception:
+            pass
 
     def send_notification_if_needed(self):
         message = '%s\n' % datetime.datetime.now().strftime('%d.%m.%Y %H:%M:%S')
@@ -171,7 +184,3 @@ class MBBKeepAliveExecutor(object):
             subject = 'Notifikacija MBB'
         if needs_mail_send:
             send_mail(subject, message)
-
-if __name__ == '__main__':
-    if not has_internet_connectivity():
-        enable_gsm_interface()
