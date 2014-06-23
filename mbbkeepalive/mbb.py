@@ -78,16 +78,6 @@ class NMCliConList(object):
         return len(self.gsm_interfaces) > 0
 
 
-def has_internet_connectivity():
-    has_connectivity = False
-    try:
-        response = requests.get('http://mbb.tele2.hr/fetch/tpo')
-        if response.status_code == 200:
-            has_connectivity = True
-    finally:
-        return has_connectivity
-
-
 def enable_gsm_interface():
     output = subprocess.check_output(['nmcli', 'con', 'list'])
     nmcli = NMCliConList(output)
